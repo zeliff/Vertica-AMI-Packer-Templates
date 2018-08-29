@@ -1,10 +1,10 @@
 {
-    "vertica_version": "9.1.0",
     "os_name": "Red Hat",
-    "os_version": "7.4",
+    "os_version": "7.5",
     "os_distro_id": "rhel",
     "ssh_username": "ec2-user",
-    "instance_type": "m4.large",
-    "vertica_base1_ami":"ami-05feec7f"
+    "instance_type": "t2.micro",
+    "base_ami": "ami-6871a115",
+    "root_device": "/dev/sda1"
 }
 

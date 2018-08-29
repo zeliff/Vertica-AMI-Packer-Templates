@@ -14,6 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+echo 
+echo " #### Starting common_install_update_software ####"
+echo
+
+OS=`grep ^ID= /etc/os-release | cut -f2 -d= | sed 's/\"//g'`
+echo "OS detected: $OS"
 
 echo
 echo "*** Remove unwanted packages"
@@ -21,23 +27,83 @@ echo
 # VER-46146
 yum --color=never erase -y microcode_ctl
 
-echo 
-echo "*** Upgrade some software"
-echo
-#yum --color=never update -y glibc   # commenting this out for RH/CO 7.3 update
-yum --color=never update -y cloud-init
+case $OS in
+    rhel|centos) 
+        echo 
+        echo "*** Upgrade selected software"
+        echo
+        yum --color=never update -y cloud-init
+        ;;
+    amzn)
+        #  As of AL 2.0 GA we don't update the OS
+        echo
+        echo "*** Skipping update of OS packages"
+        echo
+        #yum --color=never update -y 
+        ;;
+    *)
+        echo "ERROR:   update software.   We shouldn't even be here"
+        exit 1
+        ;;
+esac
+
 
 echo 
-echo "*** Install software"
+echo "*** Install required software"
 echo
-yum --color=never install -y wget mdadm vim screen perl-Time-HiRes nc sysstat mcelog gdb compat-libgfortran-41 yum-versionlock fuse fuse-libs curl-devel libxml2-devel openssl-devel mailcap s3cmd dialog python-pip unzip zip libgfortran
+echo "   *** Software required for Vertica"
+#  See Vertica docs:  Installing Vertica > Before You Install Vertica > Operating System Configuration Task Overview > General Operating System Configuration - Manual Configuration > Support Tools
+yum --color=never install -y gdb mcelog sysstat 
+#  See Vertica docs:  Installing Vertica > Before You Install Vertica > Operating System Configuration Task Overview > System User Configuration > Package Dependencies
+yum --color=never install -y openssh which dialog
+#  See Vertica docs:  Installing Vertica > Before You Install Vertica > Operating System Configuration Task Overview > System User Configuration > TZ Environment Variable
+yum --color=never update -y tzdata
+#  Required for MC cluster provisioning (and raid provisioning)
+yum --color=never install -y nmap-ncat mdadm
+
+
+echo "   *** Software required for AMI creation "
+yum --color=never install -y wget sudo yum-versionlock zip unzip
+
+echo "   *** Software required R SDK"
+
+echo "   *** Software required SDK examples"
 
 echo 
-echo "*** Update kernel for patched security vulnerability"
+echo "*** Update and/or lock kernel"
 echo
+
+# Updating for security fixes
 # Jiras:  VER-59802, VER-59803
 # CVEs:  https://access.redhat.com/errata/RHSA-2018:0007
-yum versionlock del kernel
-yum --color=never update -y kernel kernel-tools-libs
-yum versionlock kernel-3.10.0-693.11.6*
+
+case $OS in
+    centos)
+        #yum --color=never update -y kernel kernel-tools-libs
+        yum versionlock kernel centos-release
+        ;;
+    rhel)
+        #yum --color=never update -y kernel kernel-tools-libs
+        yum versionlock kernel redhat-release-server
+        ;;
+    amzn)
+        #yum --color=never update -y kernel-toos-libs
+        yum versionlock add system-release
+        ;;
+    *)
+        echo "ERROR: kernel update/locking: distribution not recognized:  $OS"
+        exit 1
+        ;;
+esac
+
+echo "******"
+echo "Kernel:"
+echo "******"
+uname -a
+rpm -q kernel
+
+echo "******"
+echo "Version lock list"
+echo "******"
+yum versionlock list
 

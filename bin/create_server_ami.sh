@@ -29,7 +29,6 @@ function usage {
     echo "-o <os>                   Base operating system.  [RHEL|CENTOS|AMZN]"
     echo "-b <build_number>         [optional] A meaningful build designator. Ex: build number, RC, GA, etc."
     echo "-n <ami name>             [optional] A meaningful AMI name."
-    echo "-v <vertica version>      [optional] Vertica version number (overrides config-ec2.json value)"
     echo "-l <logfile name>         [optional] Name of the file to log packer stdout"
     echo "-R                        [optional] Don't generate a run-config.json file"
     echo "-h                        This message."
@@ -107,15 +106,7 @@ if [ -n "$LOGFILE" ]; then
     PACKER_LOG=$LOGFILE
 fi
 
-if [ "x${USERS_AMI_NAME}" = "x" ]; then
-    # Calculate default value of AMI_NAME.  Can be overridden from command line"
-    #
-    RPM_VERSION=`rpm -qp --qf '%{VERSION}' rpms.server/vertica-x86_64.${RPM_OS}.latest.rpm`
-    RPM_RELEASE=`rpm -qp --qf '%{RELEASE}' rpms.server/vertica-x86_64.${RPM_OS}.latest.rpm`
-    AMI_NAME="Daily ${RPM_VERSION}-${RPM_RELEASE}"
-else
-    AMI_NAME="${USERS_AMI_NAME}"
-fi
+AMI_NAME="${USERS_AMI_NAME}"
 
 # build run configuration file
 #
@@ -127,13 +118,6 @@ if [ -z "${SKIP_RUN_CONFIG}" ]; then
     if [ ! -z "${BUILD_NUMBER}" ]; then
         echo -n " \"build_number\": \"" >> ${RUN_CONFIG}
         echo -n "${BUILD_NUMBER}" >> ${RUN_CONFIG}
-        echo "\"," >> ${RUN_CONFIG}
-    fi
-
-    # Add vertica version if specified
-    if [ ! -z "${VERTICA_VERSION}" ]; then
-        echo -n " \"vertica_version\": \"" >> ${RUN_CONFIG}
-        echo -n "${VERTICA_VERSION}" >> ${RUN_CONFIG}
         echo "\"," >> ${RUN_CONFIG}
     fi
 

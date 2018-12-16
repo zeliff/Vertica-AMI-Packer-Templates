@@ -25,7 +25,7 @@ Instructions for creating the base AMI are described below.
 
 # Preliminaries
 
-1.  Install [Packer](www.packer.io) on your host.  These templates work with Packer version 1.0.0.   Later versions of Packer have changed some variable names.
+1.  Install [Packer](www.packer.io) on your host.  
 2.  Create a ```aws_credentials.json``` file from the example, substituing your own AWS credentials.
 3.  Download the Vertica server rpm.   (https://www.vertica.com/download/vertica/community-edition/)
 4.  Create your AMI (see below.)   

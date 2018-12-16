@@ -15,25 +15,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 # Overview
-This repository contains a set of packer templates and provisioning scripts which are used to create a Vertica server AMI for a manually created base AMI.  The base AMI is a machine image with a filesystem paritioned for use with Vertica.   These templates support AMIs based upon Red Hat Enterprise Linux 7.4, CentOS 7.4, and Amazon Linux 2.0 RC candidate.  The templates also use the us-east-1 region.  This can be changed by editting the ```server_ami.json``` file.
+This repository contains a set of packer templates and provisioning scripts which are used to create a Vertica server AMI.  The source AMI is a machine image of the base operating system (for example: the AWS Marketplace CentOS image.)  Template configurations are provided for production of AMIs based upon Red Hat Enterprise Linux 7.5, CentOS 7.5, and Amazon Linux 2.0-3.  The templates use the us-east-1 region but this can be changed by editting the ```server_ami.json``` file.
 
 Instructions for creating the base AMI are described below.
 
 # Limitations
 
-   * These templates work with Packer version 1.0.0.   Later versions of Packer introduce changes to the variable names and will not work with these templates.
-   * These templates are tailored for use with Vertica version 9.0.0 and later.
+   * These templates have been tested to work with Packer version 1.3.3.   
 
 # Preliminaries
 
 1.  Install [Packer](www.packer.io) on your host.  These templates work with Packer version 1.0.0.   Later versions of Packer have changed some variable names.
 2.  Create a ```aws_credentials.json``` file from the example, substituing your own AWS credentials.
-3.  Create Base1 AMI (see below.)   
+3.  Download the Vertica server rpm.   (https://www.vertica.com/download/vertica/community-edition/)
+4.  Create your AMI (see below.)   
 
 # Using Packer to Create the Vertica AMI
 
-1. Create a directory 'rpms.server' containing the Vertica server and R Lang rpms of your choice.  
-2. Run ``` bin/create_server_ami.sh -o <OS>```.   This script optinally takes one of two parameters:  -b \<build number\> or -n \<AMI name\>
+1. Create a directory 'rpms' containing the Vertica server and (optionally) the R Lang rpms.  
+2. Run ``` bin/create_server_ami.sh -o <OS>```.   
 
 # Creating the Base AMI
 

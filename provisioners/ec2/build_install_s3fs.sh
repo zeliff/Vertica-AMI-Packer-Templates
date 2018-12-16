@@ -18,7 +18,6 @@
 echo       
 echo "*** install s3fs build dependencies"
 echo 
-#yum --color=never install -y gcc libstdc++-devel gcc-c++ curl-devel libxml2-devel openssl-devel mailcap fuse fuse-devel fuse-libs automake wgetyum install -y gcc libstdc++-devel gcc-c++ curl-devel libxml2-devel openssl-devel mailcap fuse fuse-devel fuse-libs automake wget
 yum --color=never install -y automake fuse fuse-devel gcc-c++ git libcurl-devel libxml2-devel make openssl-devel
 
 echo
@@ -35,8 +34,10 @@ make install
 echo
 echo "*** clean up s3fs build dependencies"
 echo
-#yum --color=never remove -y autoconf automake cpp gcc glibc-devel glibc-headers kernel-headers keyutils-libs-devel krb5-devel libcom_err-devel libidn-devel libselinux-devel libsepol-devel zlib-devel  libstdc++-devel gcc-c++ curl-devel libxml2-devel openssl-devel  fuse-devel
-yum --color=never remove -y automake fuse fuse-devel gcc-c++ git libcurl-devel libxml2-devel make openssl-devel
+#yum --color=never remove -y automake fuse fuse-devel gcc-c++ git libcurl-devel libxml2-devel make openssl-devel
+# VER-63186:  AL2 LTS thinks make depends upon cloud-init, so when you erase make you break the AMI.  So, workaround is to not remove make
+# That's a harmless change so we'll keep it on all platforms.
+yum --color=never remove -y automake fuse fuse-devel gcc-c++ git libcurl-devel libxml2-devel openssl-devel
 cd ..
 rm -rf s3fs-fuse-1.82 v1.82.tar.gz
 

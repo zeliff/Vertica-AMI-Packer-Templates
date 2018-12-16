@@ -1,10 +1,11 @@
 {
   "variables": {
-    "ami_name": "Vertica Server {{user `build_number`}}",
+    "ami_name": "Vertica Server ",
     "aws_access_key": "",
     "aws_secret_key": "",
     "vertica_version": "",
     "build_number": "unknown",
+    "rpm_dir": "rpms",
     "vertica_base1_ami": "",
     "instance_type": "",
     "vpc_id": "",
@@ -26,19 +27,65 @@
       "security_group_id": "{{user `secgrp_id`}}",
       "subnet_id": "{{user `subnet_id`}}",
       "vpc_id": "{{user `vpc_id`}}",
-      "enhanced_networking": "true",
+      "ena_support": "true",
+      "sriov_support": "true",
       "associate_public_ip_address": "true",
       "tags": 
         {
             "OS": "{{user `os_name`}}",
             "OS Version": "{{user `os_version`}}",
-            "Name": "Vertica Analytic Database {{user `vertica_version`}}",
+            "Name": "Vertica {{user `vertica_version`}}",
             "Build": "{{user `build_number`}}"
-        }
+        },
+            "launch_block_device_mappings": [
+        {
+           "device_name": "{{user `root_device`}}",
+           "volume_size": 30,
+           "volume_type": "gp2",
+           "delete_on_termination": true
+        },
+         {
+            "device_name": "/dev/sdb",
+            "delete_on_termination": "true",
+            "volume_size": 20,
+            "volume_type": "gp2"
+         }
+       ]
     }
   ],
 
   "provisioners": [
+        {
+      "type": "shell",
+      "inline": [
+            "echo ***",
+            "echo Creating swap file",
+            "echo ***",
+            "sudo dd if=/dev/zero of=/swapfile bs=1024 count=2097152",
+            "sudo chmod -v 600 /swapfile",
+            "sudo mkswap /swapfile",
+            "sudo swapon -v /swapfile"
+        ]
+    },
+    {
+      "type": "shell",
+      "inline": [
+            "echo ***",
+            "echo Create /dev/xvdb1 for use as /vertica/data",
+            "echo ***"
+        ]
+    },
+    {
+      "type": "shell",
+      "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E '{{ .Path }}'",
+      "script": "provisioners/create_data_partition.sh"
+
+    },
+    {
+      "type": "shell",
+      "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E '{{ .Path }}'",
+      "script": "provisioners/update_fstab.sh"
+    },
     {
       "type": "file",
       "source": "provisioners/fragment.rc.local.common",
@@ -61,7 +108,7 @@
     },
     {
       "type": "file",
-      "source": "rpms.server/",
+      "source": "{{user `rpm_dir`}}/",
       "destination": "."
     },         
     {
@@ -69,13 +116,13 @@
       "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E '{{ .Path }}'",
       "scripts": [
         "provisioners/common_install_update_software.sh",
-        "provisioners/server_install_update_software.sh",
         "provisioners/ec2/build_install_s3fs.sh",
         "provisioners/ec2/install_awscli.sh",
         "provisioners/common_prepare_platform.sh",
         "provisioners/server_install_rpms.sh",  
         "provisioners/common_create_dbadmin.sh",
         "provisioners/ec2/cloudwatch_monitor_scripts.sh",
+        "provisioners/configure_user_limits.sh",
         "provisioners/common_cleanup.sh"
         ]
     }

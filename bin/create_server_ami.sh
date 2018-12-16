@@ -20,7 +20,7 @@
 RUN_CONFIG=run-config.json
 BUILD_NUMBER=""
 SCRIPT=`basename $0`
-ARGS=$(getopt -o o:b:n:l:v:hR -n ${SCRIPT}  -- "$@");
+ARGS=$(getopt -o o:b:n:l:v:hRd -n ${SCRIPT}  -- "$@");
 
 
 function usage {
@@ -31,6 +31,7 @@ function usage {
     echo "-n <ami name>             [optional] A meaningful AMI name."
     echo "-v <vertica version>      [optional] Vertica version number (overrides config-ec2.json value)"
     echo "-l <logfile name>         [optional] Name of the file to log packer stdout"
+    echo "-d                        [optional] Dry run.  Validate the template and exit"
     echo "-R                        [optional] Don't generate a run-config.json file"
     echo "-h                        This message."
     exit 1
@@ -69,6 +70,9 @@ function handle_options {
         -l)
             shift;
             LOGFILE="$1";
+            shift;;
+        -d)
+            DRY_RUN="true";
             shift;;
         -R)
             SKIP_RUN_CONFIG="true";
@@ -110,8 +114,8 @@ fi
 if [ "x${USERS_AMI_NAME}" = "x" ]; then
     # Calculate default value of AMI_NAME.  Can be overridden from command line"
     #
-    RPM_VERSION=`rpm -qp --qf '%{VERSION}' rpms.server/vertica-x86_64.${RPM_OS}.latest.rpm`
-    RPM_RELEASE=`rpm -qp --qf '%{RELEASE}' rpms.server/vertica-x86_64.${RPM_OS}.latest.rpm`
+    RPM_VERSION=`rpm -qp --qf '%{VERSION}' rpms/vertica*${RPM_OS}*.rpm`
+    RPM_RELEASE=`rpm -qp --qf '%{RELEASE}' rpms/vertica*${RPM_OS}*.rpm`
     AMI_NAME="Daily ${RPM_VERSION}-${RPM_RELEASE}"
 else
     AMI_NAME="${USERS_AMI_NAME}"
@@ -152,7 +156,9 @@ echo "Software revision:  `git rev-parse HEAD`"
 cat ${RUN_CONFIG}
 
 PACKER_OPERATION="build --color=false"
-#PACKER_OPERATION="validate"
+if [ ! -z "${DRY_RUN}" ]; then 
+	PACKER_OPERATION="validate"
+fi
 PACKER_COMMAND="packer ${PACKER_OPERATION} -var-file=${EC2_CONFIG} -var-file=config-ec2-vpc.json -var-file=aws_credentials.json -var-file ${RUN_CONFIG} ${PACKER_FILE}"
 
 # Export this for packer debugging

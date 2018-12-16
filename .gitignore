@@ -1,1 +1,5 @@
 aws_credentials.json
+rpms
+*.pem
+*.log
+run-config.json
